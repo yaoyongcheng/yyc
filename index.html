@@ -1167,6 +1167,12 @@
       border-color: rgba(148, 163, 184, 0.45);
       background: rgba(70, 80, 95, 0.35);
     }
+    .modal-row .value .project-card-status {
+      display: inline-block;
+      font-size: 14px;
+      padding: 4px 10px;
+      font-weight: 700;
+    }
     .project-card-loc {
       font-size: 14px;
       color: #8eb6d8;
@@ -1183,6 +1189,108 @@
       color: rgba(126, 182, 201, 0.65);
       font-size: 13px;
     }
+
+    /* 启动页密码验证 */
+    .login-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 35%, rgba(20, 90, 130, 0.28), transparent 60%),
+        rgba(2, 8, 16, 0.72);
+      backdrop-filter: blur(8px);
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+    .login-gate.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .login-card {
+      width: min(420px, calc(100vw - 40px));
+      padding: 36px 34px 30px;
+      background: linear-gradient(160deg, rgba(6, 28, 48, 0.96), rgba(3, 14, 28, 0.98));
+      border: 1px solid rgba(94, 231, 255, 0.45);
+      border-radius: 4px;
+      box-shadow: 0 0 48px rgba(0, 220, 255, 0.28), inset 0 0 40px rgba(0, 120, 180, 0.1);
+      text-align: center;
+      animation: modalIn 0.32s ease;
+    }
+    .login-brand {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #e8f8ff;
+      text-shadow: 0 0 18px rgba(94, 231, 255, 0.45);
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+    .login-sub {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 26px;
+      letter-spacing: 1px;
+    }
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .login-form input {
+      width: 100%;
+      height: 46px;
+      padding: 0 16px;
+      border: 1px solid rgba(94, 231, 255, 0.35);
+      border-radius: 4px;
+      background: rgba(4, 20, 36, 0.85);
+      color: #e8f8ff;
+      font-family: var(--font-ui);
+      font-size: 16px;
+      letter-spacing: 4px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .login-form input:focus {
+      border-color: rgba(94, 231, 255, 0.75);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+    }
+    .login-form input::placeholder {
+      letter-spacing: 1px;
+      color: rgba(126, 182, 201, 0.55);
+    }
+    .login-form button {
+      height: 46px;
+      border: 1px solid rgba(94, 231, 255, 0.55);
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(0, 120, 170, 0.75), rgba(0, 180, 220, 0.55));
+      color: #e8f8ff;
+      font-family: var(--font-ui);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: filter 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 18px rgba(0, 220, 255, 0.2);
+    }
+    .login-form button:hover {
+      filter: brightness(1.12);
+      box-shadow: 0 0 24px rgba(0, 240, 255, 0.35);
+    }
+    .login-error {
+      margin-top: 14px;
+      min-height: 20px;
+      font-size: 13px;
+      color: #ff7b7b;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .login-error.is-show { opacity: 1; }
 
     /* 弹窗 */
     .modal-mask {
@@ -1270,6 +1378,25 @@
   <canvas id="particles"></canvas>
   <div id="scanlines"></div>
   <div class="soft-glow"></div>
+
+  <div class="login-gate" id="loginGate">
+    <div class="login-card">
+      <div class="login-brand">工地数字地图管理云平台</div>
+      <div class="login-sub">请输入访问密码后进入系统</div>
+      <form class="login-form" id="loginForm" autocomplete="off">
+        <input
+          type="password"
+          id="loginPwd"
+          placeholder="访问密码"
+          maxlength="32"
+          inputmode="numeric"
+          autocomplete="current-password"
+        />
+        <button type="submit">进入系统</button>
+      </form>
+      <div class="login-error" id="loginError">密码错误，请重试</div>
+    </div>
+  </div>
 
   <div class="screen" id="screenRoot">
     <header class="header">
@@ -1362,7 +1489,7 @@
             <div class="kpi-body">
               <div class="kpi-label">分布省份</div>
               <div class="kpi-num-row">
-                <span class="kpi-value" data-target="15">0</span>
+                <span class="kpi-value" data-target="14">0</span>
                 <span class="kpi-unit">个</span>
               </div>
             </div>
@@ -1445,9 +1572,10 @@
       </div>
       <div class="modal-body">
         <div class="modal-row"><span class="label">项目名称</span><span class="value" id="mName">—</span></div>
+        <div class="modal-row"><span class="label">应用单位</span><span class="value" id="mUnit">—</span></div>
         <div class="modal-row"><span class="label">项目类型</span><span class="value" id="mType">—</span></div>
         <div class="modal-row"><span class="label">项目位置</span><span class="value" id="mLoc">—</span></div>
-        <div class="modal-row"><span class="label">项目阶段</span><span class="value" id="mStatus">—</span></div>
+        <div class="modal-row"><span class="label">项目阶段</span><span class="value"><span class="project-card-status" id="mStatus">—</span></span></div>
         <div class="modal-row">
           <span class="label">推进进度</span>
           <span class="value">
@@ -1468,11 +1596,11 @@
      * 业务数据区 —— 由 sync-from-excel.ps1 从 Excel 同步生成
      * 坐标旁路：project-coords.json ；指令：在 Cursor 发送「更新大屏数据」
      **************************************************************************/
-                                        /* === MOCK_DATA_START === */
+                                                /* === MOCK_DATA_START === */
     const MOCK = {
       kpi: {
         projectTotal: 37,
-        provinceCount: 15,
+        provinceCount: 14,
         deviceTypes: 10,
         deviceTotal: 284
       },
@@ -1497,9 +1625,9 @@
         total: 23,
         units: [
           { name: "总承包公司", full: "中建三局集团有限公司工程总承包公司", value: 9 },
+          { name: "科创公司", full: "中建三局科创公司", value: 7 },
+          { name: "二公司", full: "中建三局第二建设工程有限责任公司", value: 6 },
           { name: "一公司", full: "中建三局第一建设工程有限责任公司", value: 6 },
-          { name: "科创公司", full: "中建三局科创公司", value: 6 },
-          { name: "二公司", full: "中建三局第二建设工程有限责任公司", value: 5 },
           { name: "华南公司", full: "中建三局集团华南有限公司", value: 3 },
           { name: "铁投公司", full: "基础设施事业部（铁投公司）", value: 1 },
           { name: "先进院", full: "中国建筑先进技术研究院", value: 1 },
@@ -1519,7 +1647,7 @@
         "河北省": 0,
         "山西省": 0,
         "内蒙古自治区": 0,
-        "辽宁省": 2,
+        "辽宁省": 3,
         "吉林省": 0,
         "黑龙江省": 0,
         "上海市": 1,
@@ -1529,7 +1657,7 @@
         "福建省": 1,
         "江西省": 0,
         "山东省": 1,
-        "河南省": 1,
+        "河南省": 0,
         "湖北省": 15,
         "湖南省": 0,
         "广东省": 4,
@@ -1589,71 +1717,69 @@
       },
       cityProjects: {
         "安徽省": [
-          { name: "安医大项目", type: "房建", city: "合肥市", loc: "安徽省合肥市", progress: 16, status: "规划对接", start: "预计2026.09-", owner: "丁振轩", phone: "15827939799", coord: [117.17, 31.86] }
+          { name: "安医大项目", type: "房建", city: "合肥市", loc: "安徽省合肥市", progress: 16, status: "规划对接", start: "预计2026.09-", owner: "丁振轩", phone: "15827939799", unit: "中建三局第一建设工程有限责任公司", coord: [117.17, 31.86] }
         ],
         "北京市": [
-          { name: "华能总部项目", type: "房建", city: "北京市", loc: "北京市", progress: 75, status: "持续应用中", start: "2025.12-", owner: "欧洋", phone: "15209848978", coord: [115.99, 39.1] },
-          { name: "北京壹品宝山项目", type: "房建", city: "北京市", loc: "北京市", progress: 72, status: "持续应用中", start: "2026.01-", owner: "马明贺", phone: "18649212992", coord: [116.19, 39.94] }
+          { name: "华能总部项目", type: "房建", city: "北京市", loc: "北京市", progress: 75, status: "持续应用中", start: "2025.12-", owner: "欧洋", phone: "15209848978", unit: "中建三局集团北京有限公司", coord: [115.99, 39.1] },
+          { name: "北京壹品宝山项目", type: "房建", city: "北京市", loc: "北京市", progress: 72, status: "持续应用中", start: "2026.01-", owner: "马明贺", phone: "18649212992", unit: "中建三局第一建设工程有限责任公司", coord: [116.19, 39.94] }
         ],
         "福建省": [
-          { name: "厦门将军祠项目", type: "房建", city: "厦门市", loc: "福建省厦门市", progress: 58, status: "持续应用中", start: "2026.03-", owner: "黄育聪", phone: "17350810109", coord: [118.1, 24.47] }
+          { name: "厦门将军祠项目", type: "房建", city: "厦门市", loc: "福建省厦门市", progress: 58, status: "持续应用中", start: "2026.03-", owner: "黄育聪", phone: "17350810109", unit: "中建三局集团华南有限公司", coord: [118.1, 24.47] }
         ],
         "广东省": [
-          { name: "广州黄边村", type: "房建", city: "广州市", loc: "广东省广州市", progress: 100, status: "应用结束", start: "2025.01-2026.01", owner: "周国伟", phone: "18171409917", coord: [113.27, 23.22] },
-          { name: "广州三元里项目", type: "房建", city: "广州市", loc: "广东省广州市", progress: 58, status: "持续应用中", start: "2026.03-", owner: "马康", phone: "19913147464", coord: [113.26, 23.17] },
-          { name: "深圳文创园项目", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 16, status: "规划对接", start: "—", owner: "盛威", phone: "13554259491", coord: [114.08, 22.54] },
-          { name: "深圳第一职校", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [114.08, 22.54] }
-        ],
-        "河南省": [
-          { name: "胖东来", type: "房建", city: "许昌市", loc: "河南省许昌市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [113.89, 34.04] }
+          { name: "广州黄边村", type: "房建", city: "广州市", loc: "广东省广州市", progress: 100, status: "应用结束", start: "2025.01-2026.01", owner: "周国伟", phone: "18171409917", unit: "中建三局科创公司", coord: [113.27, 23.22] },
+          { name: "广州三元里项目", type: "房建", city: "广州市", loc: "广东省广州市", progress: 58, status: "持续应用中", start: "2026.03-", owner: "马康", phone: "19913147464", unit: "中建三局集团华南有限公司", coord: [113.26, 23.17] },
+          { name: "深圳文创园项目", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 16, status: "规划对接", start: "—", owner: "盛威", phone: "13554259491", unit: "中建三局集团华南有限公司", coord: [114.08, 22.54] },
+          { name: "深圳第一职校", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", unit: "中建三局第二建设工程有限责任公司", coord: [114.08, 22.54] }
         ],
         "湖北省": [
-          { name: "光谷科创金融总部", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2024.05-2025.09", owner: "—", phone: "—", coord: [114.51, 30.47] },
-          { name: "汉韵公馆", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.01-2026.05", owner: "孙志庭", phone: "13163206595", coord: [114.51, 30.48] },
-          { name: "九峯首府", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.06-2026.03", owner: "向彪", phone: "—", coord: [114.47, 30.5] },
-          { name: "金银湖145地块项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "陈俊", phone: "—", coord: [114.17, 30.64] },
-          { name: "华科学子新苑", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "罗杨", phone: "15004950133", coord: [114.26, 30.58] },
-          { name: "中法同济项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "王梅杰", phone: "15527810965", coord: [114.11, 30.55] },
-          { name: "戏曲中心项目", type: "公建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.09-2026.04", owner: "粟剑波", phone: "18271846276", coord: [114.25, 30.56] },
-          { name: "葛店实验基地", type: "厂房", city: "鄂州市", loc: "湖北省鄂州市", progress: 60, status: "持续应用中", start: "2025.10-", owner: "—", phone: "—", coord: [114.66, 30.53] },
-          { name: "华师南湖训练馆项目", type: "公建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.11-2026.04", owner: "金俊辰", phone: "13419511885", coord: [114.36, 30.51] },
-          { name: "向阳村项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 62, status: "持续应用中", start: "2026.04-", owner: "江云轩", phone: "15807155923", coord: [114.25, 30.53] },
-          { name: "华科土环楼", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 55, status: "持续应用中", start: "2026.06-", owner: "吴启军", phone: "18120586631", coord: [114.42, 30.51] },
-          { name: "光谷元著", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 70, status: "持续应用中", start: "2026.06-", owner: "孙志庭", phone: "13163206595", coord: [114.5, 30.47] },
-          { name: "科创阳逻厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 68, status: "持续应用中", start: "2026.06-", owner: "陈兵勇", phone: "18616241024", coord: [114.57, 30.68] },
-          { name: "钢丝绳厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 18, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [114.25, 30.51] },
-          { name: "楚能二期项目", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 15, status: "规划对接", start: "预计2026.09-", owner: "洪建", phone: "—", coord: [114.26, 30.39] }
+          { name: "光谷科创金融总部", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2024.05-2025.09", owner: "—", phone: "—", unit: "中建三局集团有限公司工程总承包公司", coord: [114.51, 30.47] },
+          { name: "汉韵公馆", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.01-2026.05", owner: "孙志庭", phone: "13163206595", unit: "中建三局科创公司", coord: [114.51, 30.48] },
+          { name: "九峯首府", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.06-2026.03", owner: "向彪", phone: "—", unit: "中建三局集团有限公司工程总承包公司", coord: [114.47, 30.5] },
+          { name: "金银湖145地块项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "陈俊", phone: "—", unit: "中建三局第一建设工程有限责任公司", coord: [114.17, 30.64] },
+          { name: "华科学子新苑", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "罗杨", phone: "15004950133", unit: "中建三局集团有限公司工程总承包公司", coord: [114.26, 30.58] },
+          { name: "中法同济项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "王梅杰", phone: "15527810965", unit: "中建三局集团有限公司工程总承包公司", coord: [114.11, 30.55] },
+          { name: "戏曲中心项目", type: "公建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.09-2026.04", owner: "粟剑波", phone: "18271846276", unit: "中建三局科创公司", coord: [114.25, 30.56] },
+          { name: "葛店实验基地", type: "厂房", city: "鄂州市", loc: "湖北省鄂州市", progress: 60, status: "持续应用中", start: "2025.10-", owner: "—", phone: "—", unit: "中国建筑先进技术研究院", coord: [114.66, 30.53] },
+          { name: "华师南湖训练馆项目", type: "公建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.11-2026.04", owner: "金俊辰", phone: "13419511885", unit: "中建三局第二建设工程有限责任公司", coord: [114.36, 30.51] },
+          { name: "向阳村项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 62, status: "持续应用中", start: "2026.04-", owner: "江云轩", phone: "15807155923", unit: "中建三局科创公司", coord: [114.25, 30.53] },
+          { name: "华科土环楼", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 55, status: "持续应用中", start: "2026.06-", owner: "吴启军", phone: "18120586631", unit: "中建三局集团有限公司工程总承包公司", coord: [114.42, 30.51] },
+          { name: "光谷元著", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 70, status: "持续应用中", start: "2026.06-", owner: "孙志庭", phone: "13163206595", unit: "中建三局科创公司", coord: [114.5, 30.47] },
+          { name: "科创阳逻厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 68, status: "持续应用中", start: "2026.06-", owner: "陈兵勇", phone: "18616241024", unit: "中建三局科创公司", coord: [114.57, 30.68] },
+          { name: "钢丝绳厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 18, status: "规划对接", start: "—", owner: "—", phone: "—", unit: "中建三局科创公司", coord: [114.25, 30.51] },
+          { name: "楚能二期项目", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 15, status: "规划对接", start: "预计2026.09-", owner: "洪建", phone: "—", unit: "中建三局第一建设工程有限责任公司", coord: [114.26, 30.39] }
         ],
         "江苏省": [
-          { name: "胥江1号厂房项目", type: "厂房", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", coord: [120.5, 31.23] },
-          { name: "汇川动力总部项目", type: "厂房", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", coord: [120.6, 31.19] },
-          { name: "苏州丰隆项目", type: "房建", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", coord: [120.64, 31.43] },
-          { name: "苏州圆融国际广场项目", type: "房建", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "陈金龙", phone: "17710743569", coord: [120.74, 31.33] }
+          { name: "胥江1号厂房项目", type: "厂房", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", unit: "中建三局第二建设工程有限责任公司", coord: [120.5, 31.23] },
+          { name: "汇川动力总部项目", type: "厂房", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", unit: "中建三局第二建设工程有限责任公司", coord: [120.6, 31.19] },
+          { name: "苏州丰隆项目", type: "房建", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", unit: "中建三局第二建设工程有限责任公司", coord: [120.64, 31.43] },
+          { name: "苏州圆融国际广场项目", type: "房建", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "陈金龙", phone: "17710743569", unit: "中建三局第二建设工程有限责任公司", coord: [120.74, 31.33] }
         ],
         "辽宁省": [
-          { name: "沈阳地铁10号线", type: "基建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 18, status: "规划对接", start: "2026.07-", owner: "—", phone: "—", coord: [123.47, 41.82] },
-          { name: "沈阳中心", type: "房建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 15, status: "持续应用中", start: "2026.08-", owner: "—", phone: "—", coord: [123.43, 41.81] }
+          { name: "沈阳地铁10号线", type: "基建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 18, status: "规划对接", start: "2026.07-", owner: "—", phone: "—", unit: "中建三局集团建设发展有限公司", coord: [123.47, 41.82] },
+          { name: "沈阳中心", type: "房建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 15, status: "持续应用中", start: "2026.08-", owner: "—", phone: "—", unit: "中建三局集团有限公司工程总承包公司", coord: [123.43, 41.81] },
+          { name: "胖东来梦之城", type: "房建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", unit: "中建三局集团有限公司工程总承包公司", coord: [113.89, 34.04] }
         ],
         "山东省": [
-          { name: "济南地铁7号线", type: "基建", city: "济南市", loc: "山东省济南市", progress: 76, status: "持续应用中", start: "2025.11-", owner: "唐海波", phone: "18628830521", coord: [117.12, 36.67] }
+          { name: "济南地铁7号线", type: "基建", city: "济南市", loc: "山东省济南市", progress: 76, status: "持续应用中", start: "2025.11-", owner: "唐海波", phone: "18628830521", unit: "基础设施事业部（铁投公司）", coord: [117.12, 36.67] }
         ],
         "上海市": [
-          { name: "上海中船", type: "房建", city: "上海市", loc: "上海市", progress: 16, status: "规划对接", start: "预计2026.09-", owner: "盛威", phone: "13554259491", coord: [121.49, 31.24] }
+          { name: "上海中船", type: "房建", city: "上海市", loc: "上海市", progress: 16, status: "规划对接", start: "预计2026.09-", owner: "盛威", phone: "13554259491", unit: "中建三局第一建设工程有限责任公司", coord: [121.49, 31.24] }
         ],
         "四川省": [
-          { name: "德阳体育馆", type: "公建", city: "德阳市", loc: "四川省德阳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [104.4, 31.13] }
+          { name: "德阳体育馆", type: "公建", city: "德阳市", loc: "四川省德阳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", unit: "中建三局第一建设工程有限责任公司", coord: [104.4, 31.13] }
         ],
         "天津市": [
-          { name: "天津117项目", type: "房建", city: "天津市", loc: "天津市", progress: 60, status: "持续应用中", start: "2026.02-", owner: "戴路", phone: "18872277366", coord: [117.09, 39.1] }
+          { name: "天津117项目", type: "房建", city: "天津市", loc: "天津市", progress: 60, status: "持续应用中", start: "2026.02-", owner: "戴路", phone: "18872277366", unit: "中建三局集团有限公司工程总承包公司", coord: [117.09, 39.1] }
         ],
         "西藏自治区": [
-          { name: "长江壹号项目（MT）", type: "基建", city: "西藏", loc: "西藏自治区", progress: 18, status: "规划对接", start: "—", owner: "薛德昊", phone: "17639853032", coord: [94.37, 29.61] }
+          { name: "长江壹号项目", type: "基建", city: "西藏自治区", loc: "西藏自治区", progress: 15, status: "规划对接", start: "—", owner: "薛德昊", phone: "17639853032", unit: "中建三局集团有限公司工程总承包公司", coord: [94.37, 29.61] }
         ],
         "浙江省": [
-          { name: "宁波奥体中心项目", type: "公建", city: "宁波市", loc: "浙江省宁波市", progress: 70, status: "持续应用中", start: "2026.01-", owner: "李洁琳", phone: "—", coord: [121.53, 29.94] }
+          { name: "宁波奥体中心项目", type: "公建", city: "宁波市", loc: "浙江省宁波市", progress: 70, status: "持续应用中", start: "2026.01-", owner: "李洁琳", phone: "—", unit: "中建三局集团华东有限公司", coord: [121.53, 29.94] }
         ],
         "重庆市": [
-          { name: "重庆石船安置房", type: "房建", city: "重庆市", loc: "重庆市", progress: 15, status: "规划对接", start: "预计2026.09-", owner: "—", phone: "—", coord: [106.81, 29.76] }
+          { name: "重庆石船安置房", type: "房建", city: "重庆市", loc: "重庆市", progress: 15, status: "规划对接", start: "预计2026.09-", owner: "—", phone: "—", unit: "中建三局集团西南有限公司", coord: [106.81, 29.76] }
         ]
       }
     };
@@ -1877,7 +2003,7 @@
         if (region && p.province !== region) return false;
         if (status && p.status !== status) return false;
         if (!q) return true;
-        const hay = [p.name, p.loc, p.city, p.type, p.status, p.owner, p.province].join(" ").toLowerCase();
+        const hay = [p.name, p.loc, p.city, p.type, p.status, p.owner, p.unit, p.province].join(" ").toLowerCase();
         return hay.includes(q);
       });
       const box = document.getElementById("projectList");
@@ -3141,9 +3267,15 @@
     function showProjectModal(project) {
       if (!project) return;
       document.getElementById("mName").textContent = project.name;
+      const unitRaw = (project.unit || "").trim();
+      document.getElementById("mUnit").textContent =
+        !unitRaw || unitRaw === "/" || unitRaw === "-" ? "—" : unitRaw;
       document.getElementById("mType").textContent = project.type || "—";
       document.getElementById("mLoc").textContent = project.loc;
-      document.getElementById("mStatus").textContent = project.status || "—";
+      const statusEl = document.getElementById("mStatus");
+      const statusText = project.status || "—";
+      statusEl.textContent = statusText;
+      statusEl.className = "project-card-status " + statusClass(statusText);
       document.getElementById("mProgressText").textContent = project.progress + "%";
       document.getElementById("mProgressBar").style.width = project.progress + "%";
       document.getElementById("mStart").textContent = project.start || "—";
@@ -3355,7 +3487,68 @@
       setInterval(softRefresh, 30000);
     }
 
-    boot();
+    const LOGIN_PWD = "8868";
+    const LOGIN_KEY = "gongdi_map_auth_v1";
+    let appBooted = false;
+
+    function isAuthed() {
+      try {
+        return sessionStorage.getItem(LOGIN_KEY) === "1";
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setAuthed() {
+      try {
+        sessionStorage.setItem(LOGIN_KEY, "1");
+      } catch (e) { /* ignore */ }
+    }
+
+    async function enterApp() {
+      const gate = document.getElementById("loginGate");
+      if (gate) gate.classList.add("is-hidden");
+      if (appBooted) {
+        fitScreenScale();
+        resizeAll();
+        return;
+      }
+      appBooted = true;
+      await boot();
+    }
+
+    function initLoginGate() {
+      const form = document.getElementById("loginForm");
+      const input = document.getElementById("loginPwd");
+      const err = document.getElementById("loginError");
+      if (!form || !input) {
+        enterApp();
+        return;
+      }
+      if (isAuthed()) {
+        enterApp();
+        return;
+      }
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        const val = (input.value || "").trim();
+        if (val === LOGIN_PWD) {
+          if (err) err.classList.remove("is-show");
+          setAuthed();
+          enterApp();
+          return;
+        }
+        if (err) err.classList.add("is-show");
+        input.value = "";
+        input.focus();
+      });
+      input.addEventListener("input", () => {
+        if (err) err.classList.remove("is-show");
+      });
+      requestAnimationFrame(() => input.focus());
+    }
+
+    initLoginGate();
   </script>
 </body>
 </html>
