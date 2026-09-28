@@ -347,9 +347,80 @@
     }
     .right-col .glass { flex: 1; }
     .chart-box { flex: 1; min-height: 0; width: 100%; }
-    #deviceChart {
-      padding: 4px 6px 8px;
+
+    /* 项目覆盖：复用项目阶段卡片结构，单位列表 3 条轮播 */
+    .unit-cover-caption {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 280px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--chart-name-color);
+      letter-spacing: 0.4px;
+      line-height: 1.35;
+      margin-top: -2px;
+    }
+    .unit-cover-caption b {
+      font-family: var(--font-num);
+      font-weight: 800;
+      color: #9af6ff;
+      font-variant-numeric: tabular-nums;
+      margin: 0 2px;
+    }
+    .unit-carousel {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 0;
+      padding: 0 2px;
       box-sizing: border-box;
+    }
+    .unit-carousel .status-legend {
+      min-height: 66px;
+      max-width: none;
+      width: 100%;
+    }
+    .unit-carousel .status-legend-item {
+      grid-template-columns: 10px minmax(0, 1fr) auto auto;
+      gap: 8px;
+    }
+    .unit-carousel .status-legend-item .sl-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 13px;
+    }
+    .unit-carousel-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 10px;
+    }
+    .unit-carousel-dots button {
+      width: 7px;
+      height: 7px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      background: rgba(94, 231, 255, 0.28);
+      box-shadow: none;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .unit-carousel-dots button.is-active {
+      background: #5ee7ff;
+      transform: scale(1.2);
+      box-shadow: 0 0 8px rgba(94, 231, 255, 0.65);
+    }
+    .unit-carousel-dots button:focus-visible {
+      outline: 1px solid rgba(154, 246, 255, 0.7);
+      outline-offset: 2px;
     }
 
     /* 项目阶段：环图 + 紧贴图例 */
@@ -1231,7 +1302,7 @@
     </header>
 
     <section class="main">
-      <!-- 左：状态 / 类型 / 设备 -->
+      <!-- 左：状态 / 类型 / 项目覆盖 -->
       <aside class="left-col">
         <div class="glass">
           <div class="panel-head"><i class="ph-diamond" aria-hidden="true"></i><span>项目阶段</span><i class="ph-trail" aria-hidden="true"></i></div>
@@ -1251,8 +1322,21 @@
           <div class="chart-box" id="typeChart"></div>
         </div>
         <div class="glass">
-          <div class="panel-head"><i class="ph-diamond" aria-hidden="true"></i><span>接入设备</span><i class="ph-trail" aria-hidden="true"></i></div>
-          <div class="chart-box" id="deviceChart"></div>
+          <div class="panel-head"><i class="ph-diamond" aria-hidden="true"></i><span>项目覆盖</span><i class="ph-trail" aria-hidden="true"></i></div>
+          <div class="chart-box status-panel">
+            <div class="status-ring-wrap">
+              <div class="status-ring-chart" id="unitCoverChart"></div>
+              <div class="status-ring-center" aria-hidden="true">
+                <span class="src-num" id="unitCoverPct">0%</span>
+                <span class="src-label" id="unitCoverFrac">0/23</span>
+              </div>
+            </div>
+            <div class="unit-cover-caption">已覆盖 <b id="unitCoveredNum">0</b> 家三局二级单位</div>
+            <div class="unit-carousel" id="unitCarousel">
+              <ul class="status-legend" id="unitLegend"></ul>
+              <div class="unit-carousel-dots" id="unitCarouselDots" role="tablist" aria-label="应用单位翻页"></div>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -1266,7 +1350,7 @@
             <div class="kpi-body">
               <div class="kpi-label">项目数量</div>
               <div class="kpi-num-row">
-                <span class="kpi-value" data-target="24">0</span>
+                <span class="kpi-value" data-target="37">0</span>
                 <span class="kpi-unit">个</span>
               </div>
             </div>
@@ -1278,7 +1362,7 @@
             <div class="kpi-body">
               <div class="kpi-label">分布省份</div>
               <div class="kpi-num-row">
-                <span class="kpi-value" data-target="14">0</span>
+                <span class="kpi-value" data-target="15">0</span>
                 <span class="kpi-unit">个</span>
               </div>
             </div>
@@ -1302,7 +1386,7 @@
             <div class="kpi-body">
               <div class="kpi-label">接入设备数量</div>
               <div class="kpi-num-row">
-                <span class="kpi-value" data-target="47">0</span>
+                <span class="kpi-value" data-target="284">0</span>
                 <span class="kpi-unit">台</span>
               </div>
             </div>
@@ -1384,30 +1468,47 @@
      * 业务数据区 —— 由 sync-from-excel.ps1 从 Excel 同步生成
      * 坐标旁路：project-coords.json ；指令：在 Cursor 发送「更新大屏数据」
      **************************************************************************/
-                            /* === MOCK_DATA_START === */
+                                        /* === MOCK_DATA_START === */
     const MOCK = {
       kpi: {
-        projectTotal: 24,
-        provinceCount: 14,
+        projectTotal: 37,
+        provinceCount: 15,
         deviceTypes: 10,
-        deviceTotal: 47
+        deviceTotal: 284
       },
       weatherTemp: 26,
       bizTypes: [
-        { name: "房建", value: 16 },
-        { name: "厂房", value: 3 },
-        { name: "基建", value: 3 },
-        { name: "公建", value: 2 }
+        { name: "房建", value: 24 },
+        { name: "厂房", value: 6 },
+        { name: "公建", value: 4 },
+        { name: "基建", value: 3 }
       ],
       devices: [
-        { name: "塔机", value: 17 },
-        { name: "电梯", value: 16 },
-        { name: "无人机", value: 5 },
-        { name: "无人车", value: 3 },
-        { name: "机器狗", value: 1 },
-        { name: "地磅", value: 1 },
-        { name: "其他", value: 4 }
+        { name: "塔机", value: 117 },
+        { name: "电梯", value: 116 },
+        { name: "无人机", value: 15 },
+        { name: "无人车", value: 13 },
+        { name: "地磅", value: 10 },
+        { name: "机器狗", value: 5 },
+        { name: "其他", value: 8 }
       ],
+      unitCover: {
+        covered: 11,
+        total: 23,
+        units: [
+          { name: "总承包公司", full: "中建三局集团有限公司工程总承包公司", value: 9 },
+          { name: "一公司", full: "中建三局第一建设工程有限责任公司", value: 6 },
+          { name: "科创公司", full: "中建三局科创公司", value: 6 },
+          { name: "二公司", full: "中建三局第二建设工程有限责任公司", value: 5 },
+          { name: "华南公司", full: "中建三局集团华南有限公司", value: 3 },
+          { name: "铁投公司", full: "基础设施事业部（铁投公司）", value: 1 },
+          { name: "先进院", full: "中国建筑先进技术研究院", value: 1 },
+          { name: "北京公司", full: "中建三局集团北京有限公司", value: 1 },
+          { name: "华东公司", full: "中建三局集团华东有限公司", value: 1 },
+          { name: "建设发展", full: "中建三局集团建设发展有限公司", value: 1 },
+          { name: "西南公司", full: "中建三局集团西南有限公司", value: 1 }
+        ]
+      },
       trend: {
         months: ["25-01","25-10","25-11","25-12","26-01","26-02","26-03","26-04","26-06","规划"],
         values: [2, 1, 1, 1, 2, 1, 2, 1, 1, 9]
@@ -1422,14 +1523,14 @@
         "吉林省": 0,
         "黑龙江省": 0,
         "上海市": 1,
-        "江苏省": 0,
+        "江苏省": 4,
         "浙江省": 1,
         "安徽省": 1,
         "福建省": 1,
         "江西省": 0,
         "山东省": 1,
         "河南省": 1,
-        "湖北省": 6,
+        "湖北省": 15,
         "湖南省": 0,
         "广东省": 4,
         "广西壮族自治区": 0,
@@ -1449,9 +1550,9 @@
         "澳门特别行政区": 0
       },
       progressCats: [
-        { name: "持续应用中", value: 12 },
-        { name: "规划对接", value: 10 },
-        { name: "应用结束", value: 2 }
+        { name: "持续应用中", value: 13 },
+        { name: "规划对接", value: 11 },
+        { name: "应用结束", value: 13 }
       ],
       provinceCoords: {
         "吉林省": [125.3, 43.9],
@@ -1488,7 +1589,7 @@
       },
       cityProjects: {
         "安徽省": [
-          { name: "安医大项目", type: "房建", city: "合肥市", loc: "安徽省合肥市", progress: 16, status: "规划对接", start: "—", owner: "丁振轩", phone: "15827939799", coord: [117.17, 31.86] }
+          { name: "安医大项目", type: "房建", city: "合肥市", loc: "安徽省合肥市", progress: 16, status: "规划对接", start: "预计2026.09-", owner: "丁振轩", phone: "15827939799", coord: [117.17, 31.86] }
         ],
         "北京市": [
           { name: "华能总部项目", type: "房建", city: "北京市", loc: "北京市", progress: 75, status: "持续应用中", start: "2025.12-", owner: "欧洋", phone: "15209848978", coord: [115.99, 39.1] },
@@ -1501,31 +1602,46 @@
           { name: "广州黄边村", type: "房建", city: "广州市", loc: "广东省广州市", progress: 100, status: "应用结束", start: "2025.01-2026.01", owner: "周国伟", phone: "18171409917", coord: [113.27, 23.22] },
           { name: "广州三元里项目", type: "房建", city: "广州市", loc: "广东省广州市", progress: 58, status: "持续应用中", start: "2026.03-", owner: "马康", phone: "19913147464", coord: [113.26, 23.17] },
           { name: "深圳文创园项目", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 16, status: "规划对接", start: "—", owner: "盛威", phone: "13554259491", coord: [114.08, 22.54] },
-          { name: "深圳第一职校", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 15, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [114.08, 22.54] }
+          { name: "深圳第一职校", type: "房建", city: "深圳市", loc: "广东省深圳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [114.08, 22.54] }
         ],
         "河南省": [
-          { name: "胖东来", type: "房建", city: "许昌市", loc: "河南省许昌市", progress: 15, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [113.89, 34.04] }
+          { name: "胖东来", type: "房建", city: "许昌市", loc: "河南省许昌市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [113.89, 34.04] }
         ],
         "湖北省": [
-          { name: "汉韵公馆", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.01-2026.01", owner: "孙志庭", phone: "13163206595", coord: [114.51, 30.48] },
+          { name: "光谷科创金融总部", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2024.05-2025.09", owner: "—", phone: "—", coord: [114.51, 30.47] },
+          { name: "汉韵公馆", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.01-2026.05", owner: "孙志庭", phone: "13163206595", coord: [114.51, 30.48] },
+          { name: "九峯首府", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.06-2026.03", owner: "向彪", phone: "—", coord: [114.47, 30.5] },
+          { name: "金银湖145地块项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "陈俊", phone: "—", coord: [114.17, 30.64] },
+          { name: "华科学子新苑", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "罗杨", phone: "15004950133", coord: [114.26, 30.58] },
+          { name: "中法同济项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.07-2026.04", owner: "王梅杰", phone: "15527810965", coord: [114.11, 30.55] },
+          { name: "戏曲中心项目", type: "公建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.09-2026.04", owner: "粟剑波", phone: "18271846276", coord: [114.25, 30.56] },
+          { name: "葛店实验基地", type: "厂房", city: "鄂州市", loc: "湖北省鄂州市", progress: 60, status: "持续应用中", start: "2025.10-", owner: "—", phone: "—", coord: [114.66, 30.53] },
+          { name: "华师南湖训练馆项目", type: "公建", city: "武汉市", loc: "湖北省武汉市", progress: 100, status: "应用结束", start: "2025.11-2026.04", owner: "金俊辰", phone: "13419511885", coord: [114.36, 30.51] },
           { name: "向阳村项目", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 62, status: "持续应用中", start: "2026.04-", owner: "江云轩", phone: "15807155923", coord: [114.25, 30.53] },
           { name: "华科土环楼", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 55, status: "持续应用中", start: "2026.06-", owner: "吴启军", phone: "18120586631", coord: [114.42, 30.51] },
-          { name: "光谷元著", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 70, status: "持续应用中", start: "—", owner: "孙志庭", phone: "13163206595", coord: [114.5, 30.47] },
-          { name: "科创阳逻厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 68, status: "持续应用中", start: "—", owner: "陈兵勇", phone: "18616241024", coord: [114.57, 30.68] },
-          { name: "钢丝绳厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 18, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [114.25, 30.51] }
+          { name: "光谷元著", type: "房建", city: "武汉市", loc: "湖北省武汉市", progress: 70, status: "持续应用中", start: "2026.06-", owner: "孙志庭", phone: "13163206595", coord: [114.5, 30.47] },
+          { name: "科创阳逻厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 68, status: "持续应用中", start: "2026.06-", owner: "陈兵勇", phone: "18616241024", coord: [114.57, 30.68] },
+          { name: "钢丝绳厂", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 18, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [114.25, 30.51] },
+          { name: "楚能二期项目", type: "厂房", city: "武汉市", loc: "湖北省武汉市", progress: 15, status: "规划对接", start: "预计2026.09-", owner: "洪建", phone: "—", coord: [114.26, 30.39] }
+        ],
+        "江苏省": [
+          { name: "胥江1号厂房项目", type: "厂房", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", coord: [120.5, 31.23] },
+          { name: "汇川动力总部项目", type: "厂房", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", coord: [120.6, 31.19] },
+          { name: "苏州丰隆项目", type: "房建", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "郁亚凯", phone: "15213308453", coord: [120.64, 31.43] },
+          { name: "苏州圆融国际广场项目", type: "房建", city: "苏州市", loc: "江苏省苏州市", progress: 100, status: "应用结束", start: "2025.11-2025.12", owner: "陈金龙", phone: "17710743569", coord: [120.74, 31.33] }
         ],
         "辽宁省": [
-          { name: "沈阳地铁10号线", type: "基建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 18, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [123.47, 41.82] },
-          { name: "沈阳中心", type: "房建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 15, status: "持续应用中", start: "2026.08-", owner: "/", phone: "/", coord: [123.43, 41.81] }
+          { name: "沈阳地铁10号线", type: "基建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 18, status: "规划对接", start: "2026.07-", owner: "—", phone: "—", coord: [123.47, 41.82] },
+          { name: "沈阳中心", type: "房建", city: "沈阳市", loc: "辽宁省沈阳市", progress: 15, status: "持续应用中", start: "2026.08-", owner: "—", phone: "—", coord: [123.43, 41.81] }
         ],
         "山东省": [
           { name: "济南地铁7号线", type: "基建", city: "济南市", loc: "山东省济南市", progress: 76, status: "持续应用中", start: "2025.11-", owner: "唐海波", phone: "18628830521", coord: [117.12, 36.67] }
         ],
         "上海市": [
-          { name: "上海中船", type: "厂房", city: "上海市", loc: "上海市", progress: 16, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [121.49, 31.24] }
+          { name: "上海中船", type: "房建", city: "上海市", loc: "上海市", progress: 16, status: "规划对接", start: "预计2026.09-", owner: "盛威", phone: "13554259491", coord: [121.49, 31.24] }
         ],
         "四川省": [
-          { name: "德阳体育馆", type: "公建", city: "德阳市", loc: "四川省德阳市", progress: 15, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [104.4, 31.13] }
+          { name: "德阳体育馆", type: "公建", city: "德阳市", loc: "四川省德阳市", progress: 15, status: "规划对接", start: "—", owner: "—", phone: "—", coord: [104.4, 31.13] }
         ],
         "天津市": [
           { name: "天津117项目", type: "房建", city: "天津市", loc: "天津市", progress: 60, status: "持续应用中", start: "2026.02-", owner: "戴路", phone: "18872277366", coord: [117.09, 39.1] }
@@ -1534,10 +1650,10 @@
           { name: "长江壹号项目（MT）", type: "基建", city: "西藏", loc: "西藏自治区", progress: 18, status: "规划对接", start: "—", owner: "薛德昊", phone: "17639853032", coord: [94.37, 29.61] }
         ],
         "浙江省": [
-          { name: "宁波奥体中心项目", type: "公建", city: "宁波市", loc: "浙江省宁波市", progress: 70, status: "持续应用中", start: "2026.01-", owner: "李洁琳", phone: "18317242607", coord: [121.53, 29.94] }
+          { name: "宁波奥体中心项目", type: "公建", city: "宁波市", loc: "浙江省宁波市", progress: 70, status: "持续应用中", start: "2026.01-", owner: "李洁琳", phone: "—", coord: [121.53, 29.94] }
         ],
         "重庆市": [
-          { name: "重庆石船安置房", type: "房建", city: "重庆市", loc: "重庆市", progress: 15, status: "规划对接", start: "—", owner: "/", phone: "/", coord: [106.81, 29.76] }
+          { name: "重庆石船安置房", type: "房建", city: "重庆市", loc: "重庆市", progress: 15, status: "规划对接", start: "预计2026.09-", owner: "—", phone: "—", coord: [106.81, 29.76] }
         ]
       }
     };
@@ -2092,57 +2208,140 @@
       });
     }
 
-    function initDeviceChart() {
-      charts.device = echarts.init(document.getElementById("deviceChart"));
-      applyChartPointerScale(charts.device);
-      charts.device.setOption({
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, backgroundColor: "rgba(4,20,40,0.92)", borderColor: "#5ee7ff", textStyle: { color: "#e8f8ff", fontSize: 14 } },
-        grid: { left: 10, right: 10, top: 28, bottom: 10, containLabel: true },
-        xAxis: {
-          type: "category",
-          data: MOCK.devices.map(d => d.name),
-          axisLabel: {
-            ...CHART_NAME_LABEL,
-            fontSize: 13,
-            interval: 0,
-            rotate: 0,
-            hideOverlap: false,
-            margin: 10,
-            lineHeight: 16
-          },
-          axisLine: { lineStyle: { color: ICE.line } },
-          axisTick: { show: false }
+    let unitCarouselTimer = null;
+    let unitCarouselPage = 0;
+    let unitCarouselUnits = [];
+
+    function renderUnitCarouselPage(page) {
+      const legendEl = document.getElementById("unitLegend");
+      const dotsEl = document.getElementById("unitCarouselDots");
+      if (!legendEl) return;
+      const pageSize = 3;
+      const totalPages = Math.max(1, Math.ceil(unitCarouselUnits.length / pageSize));
+      unitCarouselPage = ((page % totalPages) + totalPages) % totalPages;
+      const start = unitCarouselPage * pageSize;
+      const slice = unitCarouselUnits.slice(start, start + pageSize);
+      const unitProjectSum = Math.max(
+        1,
+        unitCarouselUnits.reduce((s, u) => s + (Number(u.value) || 0), 0)
+      );
+
+      legendEl.innerHTML = slice.map(u => {
+        const label = u.full || u.name || "";
+        const tip = label ? ` title="${label}"` : "";
+        const pct = Math.round((Number(u.value) || 0) / unitProjectSum * 100);
+        return `<li class="status-legend-item"${tip}>
+          <i class="sl-dot" style="background:#3dd6ff;color:#3dd6ff" aria-hidden="true"></i>
+          <span class="sl-name">${label}</span>
+          <span class="sl-count">${u.value}项</span>
+          <span class="sl-pct">${pct}%</span>
+        </li>`;
+      }).join("");
+
+      if (dotsEl) {
+        if (totalPages <= 1) {
+          dotsEl.innerHTML = "";
+        } else {
+          dotsEl.innerHTML = Array.from({ length: totalPages }, (_, i) =>
+            `<button type="button" role="tab" aria-label="第${i + 1}页"${i === unitCarouselPage ? ' class="is-active" aria-selected="true"' : ' aria-selected="false"'} data-page="${i}"></button>`
+          ).join("");
+        }
+      }
+    }
+
+    function startUnitCarousel() {
+      if (unitCarouselTimer) clearInterval(unitCarouselTimer);
+      const pageSize = 3;
+      const totalPages = Math.ceil(unitCarouselUnits.length / pageSize);
+      if (totalPages <= 1) return;
+      unitCarouselTimer = setInterval(() => {
+        renderUnitCarouselPage(unitCarouselPage + 1);
+      }, 3800);
+    }
+
+    function initUnitDistChart() {
+      const cover = MOCK.unitCover || { covered: 0, total: 23, units: [] };
+      const covered = Number(cover.covered) || 0;
+      const total = Number(cover.total) || 23;
+      const rest = Math.max(0, total - covered);
+      const pct = total > 0 ? Math.round((covered / total) * 100) : 0;
+      unitCarouselUnits = Array.isArray(cover.units) ? cover.units.slice() : [];
+
+      const pctEl = document.getElementById("unitCoverPct");
+      const fracEl = document.getElementById("unitCoverFrac");
+      const coveredEl = document.getElementById("unitCoveredNum");
+      if (pctEl) pctEl.textContent = pct + "%";
+      if (fracEl) fracEl.textContent = covered + "/" + total;
+      if (coveredEl) coveredEl.textContent = String(covered);
+
+      renderUnitCarouselPage(0);
+      startUnitCarousel();
+
+      const carouselEl = document.getElementById("unitCarousel");
+      if (carouselEl && !carouselEl.__unitCarouselBound) {
+        carouselEl.__unitCarouselBound = true;
+        carouselEl.addEventListener("mouseenter", () => {
+          if (unitCarouselTimer) clearInterval(unitCarouselTimer);
+          unitCarouselTimer = null;
+        });
+        carouselEl.addEventListener("mouseleave", () => startUnitCarousel());
+        const dotsEl = document.getElementById("unitCarouselDots");
+        if (dotsEl) {
+          dotsEl.addEventListener("click", e => {
+            const btn = e.target.closest("button[data-page]");
+            if (!btn) return;
+            renderUnitCarouselPage(Number(btn.getAttribute("data-page")) || 0);
+            startUnitCarousel();
+          });
+        }
+      }
+
+      charts.unitCover = echarts.init(document.getElementById("unitCoverChart"));
+      applyChartPointerScale(charts.unitCover);
+      charts.unitCover.setOption({
+        tooltip: {
+          trigger: "item",
+          backgroundColor: "rgba(4,20,40,0.92)",
+          borderColor: "#5ee7ff",
+          textStyle: { color: "#e8f8ff", fontSize: 13 },
+          formatter: p => `${p.name}<br/>${p.value} 家 · ${p.percent}%`
         },
-        yAxis: {
-          type: "value",
-          minInterval: 1,
-          axisLabel: { color: ICE.text, fontSize: 11 },
-          splitLine: { lineStyle: { color: "rgba(94,231,255,0.08)" } }
-        },
-        series: [{
-          name: "设备数量",
-          type: "bar",
-          barWidth: 20,
-          data: MOCK.devices.map(d => d.value),
-          label: {
-            show: true,
-            position: "top",
-            color: "#9af6ff",
-            fontSize: 12,
-            fontWeight: 700,
-            distance: 6
+        series: [
+          {
+            name: "二级单位覆盖",
+            type: "pie",
+            radius: ["62%", "86%"],
+            center: ["50%", "50%"],
+            avoidLabelOverlap: true,
+            label: { show: false },
+            labelLine: { show: false },
+            itemStyle: {
+              borderColor: "rgba(3,10,20,0.9)",
+              borderWidth: 2,
+              shadowBlur: 10,
+              shadowColor: "rgba(0,240,255,0.35)"
+            },
+            data: [
+              { name: "已覆盖", value: covered, itemStyle: { color: "#3dd6ff" } },
+              { name: "未覆盖", value: rest, itemStyle: { color: "rgba(148, 163, 184, 0.45)" } }
+            ]
           },
-          itemStyle: {
-            borderRadius: [2, 2, 0, 0],
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: "#9af6ff" },
-              { offset: 1, color: "#0a6a9a" }
-            ]),
-            shadowBlur: 8,
-            shadowColor: "rgba(0,240,255,0.35)"
+          {
+            type: "pie",
+            radius: ["92%", "95%"],
+            center: ["50%", "50%"],
+            silent: true,
+            label: { show: false },
+            data: [{ value: 1 }],
+            itemStyle: {
+              color: "rgba(94,231,255,0.35)",
+              shadowBlur: 8,
+              shadowColor: "#00f0ff"
+            }
           }
-        }]
+        ]
       });
+      requestAnimationFrame(() => charts.unitCover && charts.unitCover.resize());
     }
 
     /**************************************************************************
@@ -2155,7 +2354,7 @@
       mapName: "china",
       hasWorld: false
     };
-    const GEO_CDN = "./geo";  // 本地化地图数据（避免境外访问阿里云 403）
+    const GEO_CDN = "https://geo.datav.aliyun.com/areas_v3/bound";
     /* 仅开放再下钻的城市 */
     const CITY_ADCODE = { "武汉市": 420100 };
     const CITY_DRILL_PARENT = { "武汉市": "湖北省" };
@@ -2211,7 +2410,8 @@
           zlevel: 5,
           data,
           symbol: "circle",
-          symbolSize: val => Math.max(32, 22 + val[2] * 3.2),
+          /* 数量越大圈越大，但用开方+上限，避免湖北 15 等过大 */
+          symbolSize: val => Math.min(44, Math.max(26, 18 + Math.sqrt(val[2]) * 6.5)),
           animation: false,
           animationDuration: 0,
           animationDurationUpdate: 0,
@@ -2219,7 +2419,7 @@
             show: true,
             formatter: p => (p.data && p.data.projectCount != null ? p.data.projectCount : ""),
             color: "#ffffff",
-            fontSize: 20,
+            fontSize: 17,
             fontWeight: 800,
             textShadowColor: "rgba(0, 40, 80, 0.65)",
             textShadowBlur: 4
@@ -2563,6 +2763,16 @@
         zoom: 1.12
       };
 
+      /* 武汉市底图：相对省级再放大一档 */
+      const cityLayout = {
+        roam: false,
+        aspectScale: 0.85,
+        layoutCenter: ["50%", "50%"],
+        layoutSize: "118%",
+        zoom: 1.38
+      };
+      const activeSubLayout = isCity ? cityLayout : subLayout;
+
       let series;
       if (isChina) {
         series = [
@@ -2706,7 +2916,7 @@
           {
             map: mapName,
             zlevel: 2,
-            ...subLayout,
+            ...activeSubLayout,
             label: isCity ? cityLabelStyle : subLabelStyle,
             itemStyle: isCity ? cityMapItemStyle : subMapItemStyle,
             emphasis: isCity ? cityEmphasis : subEmphasis
@@ -2714,7 +2924,7 @@
           {
             map: mapName + "_outline",
             zlevel: 1,
-            ...subLayout,
+            ...activeSubLayout,
             silent: true,
             label: { show: false },
             itemStyle: isCity ? cityOutlineStyle : subOutlineStyle,
@@ -3123,7 +3333,7 @@
       renderProjectList("");
       initStatusChart();
       initTypeChart();
-      initDeviceChart();
+      initUnitDistChart();
       await renderChinaMap();
       const btnFs = document.getElementById("btnFullscreen");
       if (btnFs) btnFs.addEventListener("click", toggleFullscreen);

@@ -10,3 +10,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Spec workflow tooling (internal state, not source)
+.spec-workflow/
